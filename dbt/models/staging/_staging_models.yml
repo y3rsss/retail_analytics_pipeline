@@ -11,8 +11,127 @@ models:
       - name: customer_id
         data_tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
       - name: order_status
         data_tests:
           - accepted_values:
               arguments:
                 values: ['delivered', 'shipped', 'canceled', 'unavailable', 'invoiced', 'processing', 'created', 'approved']
+
+  - name: stg_customers
+    description: >
+      One row per customer_id. Olist creates a new customer_id for every order,
+      so customer_unique_id is the field that identifies an actual person.
+    columns:
+      - name: customer_id
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        data_tests:
+          - not_null
+
+  - name: stg_geolocation
+    description: One row per zip code prefix, averaged from raw GPS points, with points outside Brazil removed.
+    columns:
+      - name: zip_code_prefix
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_order_items
+    description: One row per item within an order.
+    columns:
+      - name: order_item_key
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_orders')
+                field: order_id
+      - name: product_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_products')
+                field: product_id
+      - name: seller_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_sellers')
+                field: seller_id
+
+  - name: stg_order_payments
+    description: One row per payment. An order can be split across several payments.
+    columns:
+      - name: payment_key
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_orders')
+                field: order_id
+      - name: payment_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'not_defined']
+
+  - name: stg_order_reviews
+    description: >
+      One row per review per order. A single review can be attached to several
+      orders, and an order can have more than one review.
+    columns:
+      - name: review_order_key
+        data_tests:
+          - unique
+          - not_null
+      - name: review_id
+        data_tests:
+          - not_null
+      - name: order_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_orders')
+                field: order_id
+      - name: review_score
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+
+  - name: stg_products
+    description: One row per product, with the misspelled source columns renamed.
+    columns:
+      - name: product_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_sellers
+    description: One row per seller.
+    columns:
+      - name: seller_id
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_product_category_translation
+    description: Portuguese to English product category names.
+    columns:
+      - name: category_name_portuguese
+        data_tests:
+          - unique
+          - not_null
