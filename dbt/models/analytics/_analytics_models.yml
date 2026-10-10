@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: monthly_sales
+    description: One row per month of non-canceled orders, with revenue, order, delivery and review metrics.
+    columns:
+      - name: order_month
+        data_tests:
+          - unique
+          - not_null
+
+  - name: customer_cohorts
+    description: One row per first-order cohort per month since first order, with retention rate.
+    columns:
+      - name: cohort_month
+        data_tests:
+          - not_null
+      - name: months_since_first_order
+        data_tests:
+          - not_null
+
+  - name: customer_rfm
+    description: >
+      One row per customer with recency and monetary scores (1-5) and a segment.
+      Frequency is simplified to repeat vs one-time because almost all customers ordered once.
+    columns:
+      - name: customer_unique_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_unique_id
+      - name: segment
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Repeat - active', 'Repeat - lapsing', 'High value - recent', 'High value - lapsed', 'One-time - recent', 'One-time - lapsed']
+
+  - name: category_performance
+    description: One row per product category, with revenue, Pareto share and average review score.
+    columns:
+      - name: category_name
+        data_tests:
+          - unique
+          - not_null
